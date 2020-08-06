@@ -3,11 +3,11 @@ from tensorflow.keras.preprocessing import text, sequence
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.layers import Embedding
-from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D
+from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 import parameters
 
 
-def classifier(n_classes):
+def classifier(n_classes,embedding_matrix):
 	model = Sequential()
 	model.add(Embedding(parameters.max_features,
                     parameters.embedding_dims,

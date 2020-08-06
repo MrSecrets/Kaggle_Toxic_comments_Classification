@@ -9,16 +9,22 @@ from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D
 from sklearn.model_selection import train_test_split
 import parameters
 import model
+
 print(tf.__version__)
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allow_growth = True
+tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
+
 
 # Load data
-
+print("Loading data")
 train_df = pd.read_csv('train.csv').fillna(' ')
 x = train_df['comment_text'].values
 y = train_df['toxic'].values
 
 #Tokenize
-
+print("Tokenizing")
 x_tokenizer = text.Tokenizer(parameters.max_features)
 x_tokenizer.fit_on_texts(list(x))
 x_tokenized = x_tokenizer.texts_to_sequences(x) #list of lists(containing numbers), so basically a list of sequences, not a numpy array
@@ -36,7 +42,7 @@ f.close()
 
 embedding_matrix = np.zeros((parameters.max_features, parameters.embedding_dims))
 for word, index in x_tokenizer.word_index.items():
-  if index > max_features -1:
+  if index > parameters.max_features -1:
     break
   else:
     embedding_vector = embeddings_index.get(word)
@@ -44,10 +50,11 @@ for word, index in x_tokenizer.word_index.items():
       embedding_matrix[index] = embedding_vector
 
 #train
-
-model = model.classifier(parameters.output_classes)
+print("Loading model")
+model = model.classifier(parameters.output_classes,embedding_matrix)
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 x_train, x_val, y_train, y_val = train_test_split(x_train_val, y, test_size=0.15, random_state=1)
+print("Training")
 model.fit(x_train, y_train,
           batch_size=parameters.batch_size,
           epochs=parameters.epochs,
@@ -58,7 +65,7 @@ model.evaluate(x_val, y_val, batch_size=128)
 test_df = pd.read_csv('./test.csv')
 x_test = test_df['comment_text'].values
 x_test_tokenized = x_tokenizer.texts_to_sequences(x_test)
-x_testing = sequence.pad_sequences(x_test_tokenized, maxlen=max_text_length)
+x_testing = sequence.pad_sequences(x_test_tokenized, maxlen=parameters.max_text_length)
 y_testing = model.predict(x_testing, verbose = 1, batch_size=32)
 
 test_df['Toxic'] = ['not toxic' if x < .5 else 'toxic' for x in y_testing]

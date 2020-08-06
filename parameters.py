@@ -1,6 +1,3 @@
-
-
-
 max_features = 20000
 max_text_length = 400
 embedding_dims = 100
